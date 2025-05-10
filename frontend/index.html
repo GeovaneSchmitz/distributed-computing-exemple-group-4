@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-size=1.0" />
+    <title>Frontend</title>
+  </head>
+  <body>
+    <div class="inputs">
+      <label class="input-label" for="size">Canvas size</label>
+      <input
+        type="range"
+        id="size"
+        name="size"
+        min="1"
+        max="50"
+        value="10" />
+      <div class="input-result" id="canvas-size">10</div>
+      <label class="input-label" for="sleep">Sleep time</label>
+      <input
+        type="range"
+        id="sleep"
+        name="sleep"
+        min="0"
+        max="30"
+        value="0" />
+      <div class="input-result" id="sleep-time">0</div>
+      <label class="input-label" for="requests">Number of requests per
+        second</label>
+      <input
+        type="range"
+        id="requests"
+        name="requests"
+        min="1"
+        max="1000"
+        value="10" />
+      <div class="input-result" id="requests-per-second">10</div>
+      <div
+        class="label-error-count">Error count:</div>
+      <div
+        class="label-error-count"
+        id="error-count">0</div>
+      <button
+        class="button"
+        onclick="clearCanvas()">Clear</button>
+    </div>
+    <div class="canvas-wrapper">
+    </div>
+    <style>
+      body {
+        display: flex;
+        font-family: Arial, sans-serif;
+        background-color: #0f0f0f;
+        margin: 0;
+        padding: 0;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        min-height: 100dvh;
+        gap: 2rem;
+
+      }
+      .inputs {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr) 100px;
+        gap: 10px;
+        padding: 20px;
+        background-color: #1f1f1f;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        border: 1px solid #333;
+      }
+      .input-result, .input-label, .label-error-count{
+        color: #ffffff;
+        font-size: 20px;
+      }
+      .button {
+        background-color: #666;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        font-size: 20px;
+      }
+      .button:hover {
+        background-color: #555;
+      }
+      .button:active {
+        background-color: #444;
+      }
+      .canvas-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        border: 1px solid #333;
+        background-color: #1f1f1f;
+        box-sizing: border-box;
+        padding: 1rem;
+      }
+      .inputs input[type="range"] {
+        -webkit-appearance: none;
+        width: 100%;
+        height: 10px;
+        background: #555;
+        border-radius: 5px;
+        outline: none;
+      }
+      .inputs input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 20px;
+        height: 20px;
+        background: #007bff;
+        border-radius: 50%;
+        cursor: pointer;
+      }
+      .inputs input[type="range"]::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+        background: #007bff;
+        border-radius: 50%;
+        cursor: pointer;
+      }
+      .inputs input[type="range"]::-ms-thumb {
+        width: 20px;
+        height: 20px;
+        background: #007bff;
+        border-radius: 50%;
+        cursor: pointer;
+      }
+    
+    </style>
+    <script>
+      let errorCount = 0;
+      let clearCanvas = () => {
+        const canvas = document.querySelector(".canvas");
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#000";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        errorCount = 0;
+      }
+      let loaded = false;
+      window.addEventListener("DOMContentLoaded", function () {
+        if (loaded) {
+          return;
+        }
+        loaded = true;
+        console.log("DOM fully loaded and parsed");
+        const sizeInput = document.getElementById("size");
+        const sleepInput = document.getElementById("sleep");
+        const requestsInput = document.getElementById("requests");
+        const canvasSizeDiv = document.getElementById("canvas-size");
+        const sleepTimeDiv = document.getElementById("sleep-time");
+        const requestsPerSecondDiv = document.getElementById("requests-per-second");
+        const canvasWrapper = document.querySelector(".canvas-wrapper");
+        const errorCountDiv = document.getElementById("error-count");
+        const canvas = document.createElement("canvas");
+        canvas.classList.add("canvas");
+        canvasWrapper.appendChild(canvas);
+
+        let requestPerSecond = 10;
+        let requestTime = 1000 / requestPerSecond;
+        let sleepTime = 0;
+        let canvasSize = 10;
+        let canvasRealSize = 0;
+        let canvasScale = 1;
+        let dpi = 1;
+        sizeInput.addEventListener("input", function () {
+          canvasSize = parseInt(this.value);
+          canvasSizeDiv.textContent = canvasSize;
+          canvasScale = canvasRealSize * dpi / canvasSize;
+          const ctx = canvas.getContext("2d");
+          ctx.fillStyle = "#000";
+
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        });
+        
+        sleepInput.addEventListener("input", function () {
+          sleepTime = parseInt(this.value);
+          sleepTimeDiv.textContent = `${sleepTime}`;
+        });
+
+        requestsInput.addEventListener("input", function () {
+          requestPerSecond = parseInt(this.value);
+          requestTime = 1000 / requestPerSecond;
+          requestsPerSecondDiv.textContent = requestPerSecond;
+
+        });
+
+        const updateCanvasSize = () => {
+          const windowWidth = window.innerWidth;
+          const windowHeight = window.innerHeight;
+          dpi = window.devicePixelRatio || 1;
+          canvasRealSize = Math.min(windowWidth, windowHeight) * 0.8;
+          //dpi
+          canvas.style.width = `${canvasRealSize}px`;
+          canvas.style.height = `${canvasRealSize}px`;
+          canvas.width = canvasRealSize * dpi;
+          canvas.height = canvasRealSize * dpi;
+          canvasScale = canvasRealSize * dpi / canvasSize;
+
+        };
+
+        // Observe the canvas wrapper for size changes
+        const resizeObserver = new ResizeObserver(() => {
+          updateCanvasSize();
+          const ctx = canvas.getContext("2d");
+          ctx.fillStyle = "#000";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        });
+        resizeObserver.observe(canvasWrapper);
+        updateCanvasSize();
+        const colorList = [
+          
+    '#3641e0',
+    '#eb2954',
+    '#21d53c',
+    '#daca29',
+    '#28d5bb',
+    '#219feb',
+    '#9541eb',
+    '#e92b9c',
+    '#eb8426',
+    '#98e31f',
+    '#e54d2c'];
+        const uuidToIndexMap = new Map();
+        const getColorByUUID = (uuid) => {
+          if (!uuidToIndexMap.has(uuid)) {
+            const index = uuidToIndexMap.size % colorList.length;
+            uuidToIndexMap.set(uuid, index);
+          }
+          return colorList[uuidToIndexMap.get(uuid)];
+        };
+
+        const requestPosition = () => {
+          fetch(`http://192.168.49.2/api/random?sleep_time=${sleepTime}&max_number=${canvasSize}`)
+            .then(async (request) => {
+              if (!request.ok) {
+                throw new Error(`HTTP error! status: ${request.status}`);
+              }
+              const data = await request.json();
+
+              const ctx = canvas.getContext("2d");
+              ctx.fillStyle = getColorByUUID(data.uuid);
+              ctx.fillRect(Math.floor (data.x* canvasScale), Math.floor(data.y *canvasScale), Math.floor(canvasScale), Math.floor(canvasScale));
+            })
+            .catch((error) => {
+              errorCount++;
+              errorCountDiv.textContent = `${errorCount}`;
+              console.error("Error fetching data:", error);
+            });
+        }
+        let oldTime = null 
+        const updateCanvas = (time) => {
+          if (oldTime === null) {
+            oldTime = time;
+          }
+          const ctx = canvas.getContext("2d");
+          const deltaTime = (time - oldTime) / 600; 
+          ctx.fillStyle = "rgba(0, 0, 0, "+deltaTime+")";
+
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          while (oldTime <= time) {
+            requestPosition();
+            oldTime += requestTime;
+          }
+          requestAnimationFrame(updateCanvas);
+          
+        }
+        requestAnimationFrame(updateCanvas);
+
+      });
+
+    </script>
+  </body>
+</html>

@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-deployment
+  labels:
+    app: static-frontend
+spec:
+  replicas: 2 # Run 2 instances of the frontend
+  selector:
+    matchLabels:
+      app: static-frontend
+  template:
+    metadata:
+      labels:
+        app: static-frontend
+    spec:
+      containers:
+      - name: static-frontend-container
+        image: static-frontend:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 80 # The port Nginx listens on

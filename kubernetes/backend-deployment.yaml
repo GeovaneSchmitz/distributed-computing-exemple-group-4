@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-deployment
+  labels:
+    app: python-backend
+spec:
+  replicas: 10 # Run 2 instances of the backend
+  selector:
+    matchLabels:
+      app: python-backend
+  template:
+    metadata:
+      labels:
+        app: python-backend
+    spec:
+      containers:
+      - name: python-backend-container
+        image: python-backend:latest # Name of the image built locally
+        # If using :latest tag, it's good practice to set imagePullPolicy to Always
+        # to ensure Kubernetes picks up new versions of the image.
+        # If you use specific version tags (e.g., python-backend:v1.0),
+        # IfNotPresent is fine.
+        # For local Minikube development where images are built into Minikube's daemon,
+        # IfNotPresent or Never can be used. Let's use IfNotPresent.
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 5000 # The port your Flask app listens on

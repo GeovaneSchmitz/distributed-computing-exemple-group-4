@@ -1,0 +1,117 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: main-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2 # For path-based routing with Nginx Ingress
+    # If using a different Ingress controller, annotations might vary or not be needed.
+    # For Minikube's default Nginx Ingress controller, this rewrite is common.
+    # It ensures that if a request comes to /api/data, the /api prefix is stripped
+    # before forwarding to the backend (so backend receives /data).
+    # If your backend expects /api/data, you might use /$1 or remove rewrite-target.
+    # Let's assume the backend expects /data after /api is stripped.
+    # If your backend routes are defined like @app.route('/api/data'),
+    # then you might use: nginx.ingress.kubernetes.io/rewrite-target: /$1
+    # For simplicity with the current backend (`@app.route('/data')` if /api/ was stripped),
+    # let's adjust the backend path or the rewrite rule.
+    #
+    # Given backend app.py has @app.route('/api/data'),
+    # we want the Ingress to forward the full path /api/data to the backend.
+    # A common setup for Nginx Ingress is to use rewrite-target: /$2 for path prefix,
+    # which means the prefix itself is stripped.
+    #
+    # Let's adjust the rewrite target to pass the full path after the host.
+    # If path is `/api/(.*)`, rewrite target `/$1` would forward `data` to backend for `/api/data`.
+    # If path is `/api(/|$)(.*)`, rewrite target `/$2` would forward `data` to backend for `/api/data`.
+    #
+    # If the backend is listening at `/api/data` and the ingress path is `/api`,
+    # we might not need a complex rewrite or use `nginx.ingress.kubernetes.io/rewrite-target: /api/$2`
+    # if the path was `/api/(.*)`.
+    #
+    # For the current backend expecting `/api/data`, and an ingress path type Prefix for `/api`,
+    # the request to the backend service should be `/api/data`.
+    # Let's try without a rewrite first, or a simple one if needed.
+    # The Nginx Ingress default behavior for Prefix path type usually forwards the matched path.
+    #
+    # If using `path: /api` with `pathType: Prefix`, requests like `/api/data` will be forwarded as `/api/data`.
+    # If using `path: /api/` with `pathType: Prefix`, requests like `/api/data` will be forwarded as `/api/data`.
+    #
+    # Let's use a common Nginx Ingress annotation for prefix stripping if the backend doesn't expect the prefix.
+    # Our backend app.py has `/api/data`. The frontend calls `/api/data`.
+    # So, if Ingress path is `/api`, it should forward `/api/data` to backend.
+    # No rewrite-target is needed if the backend path matches the full path after the domain.
+    #
+    # However, a common pattern is:
+    # Ingress path: /api (Prefix)
+    # Backend expects: /data (not /api/data)
+    # Then rewrite: nginx.ingress.kubernetes.io/rewrite-target: /$2 with path: /api(/|$)(.*)
+    #
+    # Since our backend app.py has `/api/data`, and frontend calls `/api/data`,
+    # an Ingress rule with path `/api` (Prefix) should forward the request as `/api/data` to the backend service.
+    # Let's keep it simple first and assume the default Nginx Ingress behavior for Prefix is sufficient.
+    # If not, `nginx.ingress.kubernetes.io/use-regex: "true"` and `nginx.ingress.kubernetes.io/rewrite-target: /$1` (or similar)
+    # might be needed with a path like `/api/(.*)`.
+    #
+    # For now, let's assume the backend service expects the full path `/api/data`.
+    # The annotation `nginx.ingress.kubernetes.io/rewrite-target: /$2` is often used with a path like `/something(/|$)(.*)`.
+    # If our path is `/api` and type `Prefix`, it will match `/api`, `/api/`, `/api/data`.
+    # The request to the backend service will include this path.
+    # If the backend service is listening at `/api/data` on port 5000, this should work.
+    #
+    # Let's use a standard annotation that works well for prefix paths if the backend doesn't expect the prefix.
+    # If path is `/api` and we use `rewrite-target: /$2` with `path: /api(/|$)(.*)`
+    # then `/api/data` becomes `/data` to the backend.
+    # Since our backend has `/api/data`, we want the Ingress to route `/api` to the backend,
+    # and the backend itself handles `/api/data`.
+    #
+    # A simpler approach for NGINX Ingress if backend expects the full path:
+    # No rewrite-target, or ensure it passes the path correctly.
+    # The default for Prefix pathType is that the path is passed as is.
+    #
+    # Let's use a common setup where the backend doesn't know about the `/api` prefix used for routing.
+    # Ingress path: /api
+    # Backend route: /data
+    # Rewrite: path: /api(/|$)(.*) and rewrite-target: /$2
+    #
+    # Our current backend `app.py` has `/api/data`.
+    # Frontend calls `/api/data`.
+    # Ingress should route requests for `/api/*` to backend.
+    # If Ingress path is `/api` (type Prefix), it will match `/api/data`.
+    # The request forwarded to backend service will be `/api/data`. This is what we want.
+    # So, no complex rewrite is strictly necessary if the backend service expects `/api/data`.
+    #
+    # Let's simplify and remove rewrite-target first, relying on Prefix behavior.
+    # If issues arise, we can add it. Nginx Ingress often requires it for clean backend paths.
+    # For clarity, let's use a common rewrite that strips the prefix if the backend
+    # was designed to not know about it.
+    # Path: /api(/|$)(.*)
+    # Rewrite: /$2
+    # This means if user requests http://<minikube-ip>/api/data,
+    # the Ingress matches /api(/|$)(.*)
+    # and forwards /data to the backend.
+    # So, backend app.py should have @app.route('/data')
+    #
+    # Let's adjust the backend route in app.py to be just `/data`
+    # and use the rewrite rule. This is a common pattern.
+    # I will update app.py as well.
+    nginx.ingress.kubernetes.io/use-regex: "true" # Necessary for rewrite-target with regex in path
+spec:
+  ingressClassName: nginx # For Minikube, this is often 'nginx' or the one provided by the addon.
+                          # `minikube addons enable ingress` typically uses 'nginx'.
+  rules:
+  - http:
+      paths:
+      - path: /api(/|$)(.*) # Matches /api or /api/ or /api/anything
+        pathType: Prefix # Or ImplementationSpecific if using complex regex not fully supported by Prefix
+        backend:
+          service:
+            name: backend-service
+            port:
+              number: 5000
+      - path: / # Matches the root path and everything else not matched above
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-service
+            port:
+              number: 80
