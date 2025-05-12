@@ -5,7 +5,7 @@ metadata:
   labels:
     app: python-backend
 spec:
-  replicas: 10 # Run 2 instances of the backend
+  replicas: 2 # Run 2 instances of the backend
   selector:
     matchLabels:
       app: python-backend
@@ -26,3 +26,11 @@ spec:
         imagePullPolicy: Never
         ports:
         - containerPort: 5000 # The port your Flask app listens on
+
+        resources:
+          requests:
+            cpu: "500m" # Example: 0.5 CPU core
+            memory: "256Mi"
+          limits: # Good practice to also set limits
+            cpu: "500m"
+            memory: "512Mi"

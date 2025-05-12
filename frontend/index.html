@@ -32,7 +32,7 @@
         id="requests"
         name="requests"
         min="1"
-        max="1000"
+        max="200"
         value="10" />
       <div class="input-result" id="requests-per-second">10</div>
       <div
@@ -140,6 +140,9 @@
         ctx.fillStyle = "#000";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         errorCount = 0;
+        const errorCountDiv = document.getElementById("error-count");
+        errorCountDiv.textContent = `${errorCount}`;
+
       }
       let loaded = false;
       window.addEventListener("DOMContentLoaded", function () {
@@ -193,7 +196,7 @@
           const windowWidth = window.innerWidth;
           const windowHeight = window.innerHeight;
           dpi = window.devicePixelRatio || 1;
-          canvasRealSize = Math.min(windowWidth, windowHeight) * 0.8;
+          canvasRealSize = Math.floor(Math.min(windowWidth, windowHeight) * 0.8);
           //dpi
           canvas.style.width = `${canvasRealSize}px`;
           canvas.style.height = `${canvasRealSize}px`;
@@ -235,7 +238,7 @@
         };
 
         const requestPosition = () => {
-          fetch(`http://192.168.49.2/api/random?sleep_time=${sleepTime}&max_number=${canvasSize}`)
+          fetch(`/api/random?sleep_time=${sleepTime}&max_number=${canvasSize}`)
             .then(async (request) => {
               if (!request.ok) {
                 throw new Error(`HTTP error! status: ${request.status}`);
@@ -244,7 +247,7 @@
 
               const ctx = canvas.getContext("2d");
               ctx.fillStyle = getColorByUUID(data.uuid);
-              ctx.fillRect(Math.floor (data.x* canvasScale), Math.floor(data.y *canvasScale), Math.floor(canvasScale), Math.floor(canvasScale));
+              ctx.fillRect(Math.floor (data.x* canvasScale), Math.floor(data.y *canvasScale), Math.ceil(canvasScale), Math.ceil(canvasScale));
             })
             .catch((error) => {
               errorCount++;
@@ -258,7 +261,7 @@
             oldTime = time;
           }
           const ctx = canvas.getContext("2d");
-          const deltaTime = (time - oldTime) / 600; 
+          const deltaTime = (time - oldTime) / 200; 
           ctx.fillStyle = "rgba(0, 0, 0, "+deltaTime+")";
 
           ctx.fillRect(0, 0, canvas.width, canvas.height);
