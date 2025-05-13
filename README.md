@@ -1,6 +1,7 @@
 # Projeto com Minikube e Kubernetes
 
 Este projeto utiliza o [Minikube](https://minikube.sigs.k8s.io/docs/) para simular um cluster Kubernetes local, e implementa um backend em Python e um frontend estático.
+Assista esse [vídeo](https://youtu.be/SU-muVhfrGo) para entender o projeto.
 
 ## Pré-requisitos
 
